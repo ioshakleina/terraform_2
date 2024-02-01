@@ -28,4 +28,3 @@ module "mariadb_container" {
   db_container_name = var.db_container_name
   db_root_password = var.db_root_password
 }
-
