@@ -4,60 +4,28 @@ terraform {
   required_providers {
     docker = {
       source  = "kreuzwerker/docker"
-      version = "~> 2.23.0"
+      version = "~> 3.0.2"
     }
   }
 }
 
-provider "docker" {}
-
-resource "docker_image" "nginx" {
-  name         = "nginx:latest"
-  keep_locally = false
+provider "docker" {
+  host = "unix:///var/run/docker.sock"
 }
 
-resource "docker_container" "nginx" {
-  name  = "nginx_container"
-  image = docker_image.nginx.image_id
-  
-  ports {
-    internal = 80
-    external = 8080
-  }
-
-  command = ["nginx", "-g", "daemon off;"]
- 
-  env = [
-    "NGINX_V=My First and Lastname: ${var.first_and_lastname}",  
-  ]
-
-# provisioner "local-exec" {
-   # command = "sleep 15 && curl -s 127.0.0.1:8080 | grep -q 'My First and Lastname: John Snow'"
- #  }
+module "nginx_container" {
+  source             = "./modules/nginx_container"
+  nginx_image        = "nginx"
+  nginx_version      = "latest"
+  web_container_name = var.web_container_name
 }
 
-# container MariaDB
-resource "docker_container" "mariadb_container" {
-  name  = "mariadb_container"
-  image = "mariadb:latest"
+module "mariadb_container" {
+  source = "./modules/mariadb_container"
 
-  ports {
-    internal = 3306
-    external = 3306
-  }
-
-  env = [
-    "MYSQL_ROOT_PASSWORD=${var.db_root_password}",
-  ]
+  mariadb_image     = "mariadb"
+  mariadb_version   = "latest"
+  db_container_name = var.db_container_name
+  db_root_password = var.db_root_password
 }
 
-# password
-variable "db_root_password" {
-  type        = string
-  default = "passexample"
-}
-
-variable "first_and_lastname" {
-  type        = string
-  default = "John Snow"
-}
